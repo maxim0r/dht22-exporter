@@ -1,0 +1,15 @@
+version: '3'
+
+vars:
+
+tasks:
+
+  build: docker build -t maxor/dht22-exporter .
+
+  push: docker image push maxor/dht22-exporter
+
+  run: >
+    docker run --rm 
+    --privileged
+    -p 9543:9543 
+    maxor/dht22-exporter -gpio-port GPIO2

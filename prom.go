@@ -19,7 +19,7 @@ func initMetrics(sensor Sensor, path string) error {
 		func() float64 {
 			_, temperature, err := sensor.Values()
 			if err != nil {
-				logger.Error("reading temperature error: %s", err)
+				logger.Error("reading temperature error:", err)
 			}
 			return float64(temperature)
 		},
@@ -38,7 +38,7 @@ func initMetrics(sensor Sensor, path string) error {
 		func() float64 {
 			humidity, _, err := sensor.Values()
 			if err != nil {
-				logger.Error("error reading humidity %v", err)
+				logger.Error("error reading humidity:", err)
 			}
 			return float64(humidity)
 		},
@@ -49,4 +49,6 @@ func initMetrics(sensor Sensor, path string) error {
 	logger.Info("GaugeFunc 'temperature_celsius', registered.")
 
 	http.Handle(path, promhttp.Handler())
+
+	return nil
 }

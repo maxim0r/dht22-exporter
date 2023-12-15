@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/MichaelS11/go-dht"
 )
@@ -12,6 +14,10 @@ type Sensor interface {
 
 type dht22 struct {
 	dht *dht.DHT
+
+	temp, hum float64
+	last time.Time
+	sync.Mutex
 }
 
 func initSensor(p string) (Sensor, error) {
@@ -31,5 +37,21 @@ func initSensor(p string) (Sensor, error) {
 }
 
 func (s *dht22) Values() (float64, float64, error) {
-	return s.dht.Read()
+	s.Lock()
+	defer s.Unlock()
+	
+	if time.Since(s.last) < time.Second {
+		return s.temp, s.hum, nil
+	}
+	
+	t, h, err := s.dht.ReadRetry(10)
+	if err != nil {
+		return t, h, err
+	}
+
+	s.temp = t
+	s.hum = h
+	s.last = time.Now()
+	 
+	return s.temp, s.hum, nil
 }

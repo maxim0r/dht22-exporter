@@ -5,8 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-
-	"github.com/morus12/dht22"
 )
 
 var (
@@ -19,17 +17,18 @@ var (
 
 func main() {
 	logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
-
+	logger.Info("DHT22 temperature and humidity sensor Prometheus exporter")
+	
 	flag.Parse()
 
 	sensor, err := initSensor(*gpioPort)
 	if err != nil {
-		logger.Error("init DHT22 sensor error: %s", err)
+		logger.Error("init DHT22 sensor error:", err)
 		return
 	}
 
 	if err := initMetrics(sensor, *metricsPath); err != nil {
-		logger.Error("init metrics error: %s", err)
+		logger.Error("init metrics error:", err)
 		return
 	}
 
@@ -44,6 +43,6 @@ func main() {
 	})
 
 	if err := http.ListenAndServe(*listen, nil); err != nil {
-		logger.Error("listener error: %s", err)
+		logger.Error("listener error:", err)
 	}
 }
