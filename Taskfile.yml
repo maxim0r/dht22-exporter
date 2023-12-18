@@ -4,9 +4,9 @@ vars:
 
 tasks:
 
-  build: docker build -t maxor/dht22-exporter .
+  build: docker build -t maxor/dht22-exporter:latest .
 
-  push: docker image push maxor/dht22-exporter
+  push: docker image push maxor/dht22-exporter:latest
 
   run: >
     docker run --rm 

@@ -26,32 +26,52 @@ func initSensor(p string) (Sensor, error) {
 		return nil, fmt.Errorf("HostInit error: %w", err)
 	}
 
-	d, err := dht.NewDHT(p, dht.Celsius, "")
+	dht, err := dht.NewDHT(p, dht.Celsius, "")
 	if err != nil {
 		return nil, fmt.Errorf("create DHT instance error: %w", err)
 	}
 
-	return &dht22{
-		dht: d,
-	}, nil
-}
-
-func (s *dht22) Values() (float64, float64, error) {
-	s.Lock()
-	defer s.Unlock()
-	
-	if time.Since(s.last) < time.Second {
-		return s.temp, s.hum, nil
+	d := &dht22{
+		dht: dht,
 	}
 	
-	t, h, err := s.dht.ReadRetry(10)
+	// data fetch worker
+	go func() {
+		t := time.NewTicker(time.Second*30)
+		defer t.Stop()
+		for range t.C {
+			d.Lock()
+			t, h, err := d.dht.ReadRetry(10)
+			if err != nil {
+			    d.Unlock()
+				continue
+			}
+			d.temp = t
+			d.hum = h
+			d.last = time.Now()
+			d.Unlock()
+		}
+	}()
+	
+	return d, nil
+}
+
+func (d *dht22) Values() (float64, float64, error) {
+	d.Lock()
+	defer d.Unlock()
+	
+	if time.Since(d.last) < time.Minute {
+		return d.temp, d.hum, nil
+	}
+	
+	t, h, err := d.dht.ReadRetry(10)
 	if err != nil {
 		return t, h, err
 	}
 
-	s.temp = t
-	s.hum = h
-	s.last = time.Now()
+	d.temp = t
+	d.hum = h
+	d.last = time.Now()
 	 
-	return s.temp, s.hum, nil
+	return d.temp, d.hum, nil
 }
